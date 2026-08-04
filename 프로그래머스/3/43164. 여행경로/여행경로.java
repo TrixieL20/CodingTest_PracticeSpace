@@ -2,85 +2,89 @@ import java.util.*;
 
 class Solution {
 
-    static List<List<String>> paths = new ArrayList<>();
-    static Map<String, Map<String, List<Integer>>> ticketMap = new HashMap<>();
-    static int k;
+    static List<String> answer;
+    static boolean[] visited;
 
 
     public String[] solution(String[][] tickets) {
 
+
+        // 알파벳 순서대로 탐색하기 위해 정렬
+        Arrays.sort(tickets, (a, b) -> {
+
+            if(a[0].equals(b[0])) {
+                return a[1].compareTo(b[1]);
+            }
+
+            return a[0].compareTo(b[0]);
+        });
+
+
+        visited = new boolean[tickets.length];
+
+
         List<String> path = new ArrayList<>();
-        boolean[] visited = new boolean[tickets.length];
-
-        k = tickets.length + 1;
-
         path.add("ICN");
 
 
-        for (int i = 0; i < tickets.length; i++) {
-
-            String from = tickets[i][0];
-            String to = tickets[i][1];
-
-            ticketMap
-                .computeIfAbsent(from, key -> new TreeMap<>())
-                .computeIfAbsent(to, key -> new ArrayList<>())
-                .add(i);
-        }
+        dfs("ICN", path, tickets, 0);
 
 
-        dfs("ICN", path, visited);
-
-
-        return paths.get(0).toArray(new String[0]);
+        return answer.toArray(new String[0]);
     }
 
 
 
-    static void dfs(String start,
-                    List<String> path,
-                    boolean[] visited) {
+    static void dfs(
+            String current,
+            List<String> path,
+            String[][] tickets,
+            int count
+    ) {
 
 
-        if(path.size() == k) {
+        // 모든 티켓 사용 완료
+        if(count == tickets.length) {
 
-            paths.add(new ArrayList<>(path));
+            answer = new ArrayList<>(path);
             return;
         }
 
 
-        if(!ticketMap.containsKey(start)) {
-            return;
-        }
+        for(int i = 0; i < tickets.length; i++) {
 
 
-        for(String airport : ticketMap.get(start).keySet()) {
+            // 이미 사용한 티켓
+            if(visited[i])
+                continue;
 
 
-            List<Integer> idxList = ticketMap
-                    .get(start)
-                    .get(airport);
+            // 현재 공항에서 출발하는 티켓인지 확인
+            if(!tickets[i][0].equals(current))
+                continue;
 
 
-            for(Integer idx : idxList) {
+            visited[i] = true;
+
+            path.add(tickets[i][1]);
 
 
-                if(visited[idx])
-                    continue;
+            dfs(
+                tickets[i][1],
+                path,
+                tickets,
+                count + 1
+            );
 
 
-                visited[idx] = true;
-
-                path.add(airport);
-
-
-                dfs(airport, path, visited);
+            // 이미 정답 찾음
+            if(answer != null)
+                return;
 
 
-                path.remove(path.size()-1);
+            path.remove(path.size() - 1);
 
-                visited[idx] = false;
-            }
+            visited[i] = false;
         }
     }
 }
